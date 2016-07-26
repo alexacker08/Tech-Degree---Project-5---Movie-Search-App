@@ -6,14 +6,21 @@ var movieFinderApp = (function(){
 
 	"use-strict";
 
+	//Movie section
 	var $movies = $('#movies');
+	//Search inputs
 	var $searchInput = $('#search');
+	//Year Input
 	var $yearInput = $('#year');
+	//Array that hosts all of the IMDB ID's during a search
 	var imdbArray = [];
 	var counterArray;
+	//Host URL sent during the AJAX request
 	var url = "http://www.omdbapi.com/?";
+	//Keeps track of the users pagination scrolling to determine what number index is being shown in the first of the number li elements
 	var pagIndex = 1;
 	var $pag = $('#pagination-links');
+	//Boolean to determine if the pagination section has or hasn't been built yet
 	var pagBuilt = false;
 
 	/******************************** FUNCTIONS *******************************
