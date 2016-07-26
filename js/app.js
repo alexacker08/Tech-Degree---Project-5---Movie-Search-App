@@ -1,23 +1,20 @@
 
-//var movieFinderApp = (function(){
+var movieFinderApp = (function(){
 
 	/******************************** GLOBAL VAR *******************************
 	****************************************************************************/
 
 	"use-strict";
 
-	var movies = $('#movies');
-	var searchInput = $('#search');
-	var yearInput = $('#year');
+	var $movies = $('#movies');
+	var $searchInput = $('#search');
+	var $yearInput = $('#year');
 	var imdbArray = [];
 	var counterArray;
 	var url = "http://www.omdbapi.com/?";
-	var totalResults;
 	var pagIndex = 1;
-	var pag = $('#pagination-links');
-	var pagLink;
+	var $pag = $('#pagination-links');
 	var pagBuilt = false;
-
 
 	/******************************** FUNCTIONS *******************************
 	***************************************************************************/
@@ -32,16 +29,21 @@
 		var pagWidth;
 		var pagWidthNumber;
 		counterArray = [];
-		$('.pagination').html("");
-		var pagLength = counterArray.length + 1;
 
+		//Clears out the pagination UL elements HTML
+		$('.pagination').html("");
+
+		//Starts the build or build of the pagination
 		liString += '<li class="page-item previous disabled">';
 		liString += '<a class="page-link" href="#" aria-label="Previous">';
 		liString += '<span aria-label="true">&laquo;</span>';
 		liString += '<span class="sr-only">Previous</span>';
 		liString += '</a></li>';
 
+		//Build the total number of pagination links based on the feedback from the API
 		for(var i = 0; i < pagNumber; i++){
+			
+			//Builds the first 5 pagination links as this is the max that will be displayed on the screen at one time
 			if(i < 5){
 				liString += '<li class="page-item number">';
 				liString += '<a class="page-link page-number" href="#">';
@@ -49,39 +51,47 @@
 				liString += '</a></li>';
 			}
 
+			//Push each number into the global counterArray variable which will later be used as a counting index 
+			//method of the pagination scroll effect
 			counterArray.push(i);
 
 		}
 
-		liString += '<li class="page-item next">';
+		//If the length of pagination links to build is less than 6, make the next item disabled.
+		if(counterArray.length < 5){
+			liString += '<li class="page-item next disabled">';	
+		} else {
+			liString += '<li class="page-item next">';	
+		}
+		
 		liString += '<a class="page-link" href="#" aria-label="Next">';
 		liString += '<span aria-label="true">&raquo;</span>';
 		liString += '<span class="sr-only">Next</span>';		
 		liString += '</a></li>';
 
-
+		//Apply the HTML build into the pagination <ul> element
 		$('.pagination').html(liString);
 		$('.pagination .number').eq(0).addClass('active');
-		pag.show('fast');
+		$pag.show('fast');
 
-
+		//Center the pagination links after build
 		pagWidth = $('#pagination-links').css('width');
 		pagWidthNumber = parseInt(pagWidth) / 2;
-		pag.css({
+		$pag.css({
 			'margin-left': '-' + pagWidthNumber.toString() + 'px'
 		});
-
-		pagLink = $('.number');
 	}
 
+	//Function to tell how many pagination links need to exist on the page.
 	function pagLinkNumber(number){
 		var pagLinks = Math.ceil(number / 10);
 		return pagLinks;
 
 	}
 
+	//Actions to run when a user selects the NEXT button arrow in the pagination section
 	function nextButton(){
-		var numberList = $('.number a');
+		var $numberList = $('.number a');
 		var pagLength = counterArray.length;
 		var number;
 
@@ -89,61 +99,62 @@
 		
 		if(pagLength < 6){
 			
-			return false
+			return false;
 
-		} else if(pagIndex === pagLength){
+		} else if(parseInt($('.number').last().children().html()) === pagLength){
 			
 			if(!$('.next').hasClass('disabled')){
-				$('.next').addClass('disabled')
+				$('.next').addClass('disabled');
 			}
 
 			return false;
+
+		} else {
+			//Increae the Pagination Numbers by 1
+			for(var i = 0; i < $numberList.length; i++){
+				number = parseInt($numberList.eq(i).html());
+				number++;
+				var numberString = number.toString();
+				$numberList.eq(i).html(numberString);
+			}
+
+			//Increase the PagIndex by 1
+			pagIndex++;
+
+			//Remove Disabled from the Prev Button
+			if($('.previous').hasClass('disabled')){
+				$('.previous').removeClass('disabled');
+			}	
 		}
-
-		//Increae the Pagination Numbers by 1
-		for(var i = 0; i < numberList.length; i++){
-			number = parseInt(numberList.eq(i).html());
-			number++;
-			var numberString = number.toString();
-			numberList.eq(i).html(numberString);
-		}
-
-		//Increase the PagIndex by 1
-		pagIndex++;
-
-		//Remove Disabled from the Prev Button
-		if($('.previous').hasClass('disabled')){
-			$('.previous').removeClass('disabled');
-		}	
 	}
 
-	//Decrease the pagination number listing and apply a disblaed
+	//Actions to run when a user selects the PREVIOUS button arrow in the pagination section
 	function prevButton(){
-		var numberList = $('.number a');
+		var $numberList = $('.number a');
 		var number;
-		var previous = $('.previous');
+		var $previous = $('.previous');
 
-		if(pagIndex < 2){
+		if(parseInt($('.number').first().children().html()) === 1){
 
-			if(!$('.previous').hasClass('disabled')){
-				$('.previous').addClass('disabled');
+			if(!$previous.hasClass('disabled')){
+				$previous.addClass('disabled');
 			}	
 
 			return false;
 
 		} else {
-			for(var i = 0; i < numberList.length; i++){
-				number = parseInt(numberList.eq(i).html());
+
+			for(var i = 0; i < $numberList.length; i++){
+				number = parseInt($numberList.eq(i).html());
 				number--;
 				var numberString = number.toString();
-				numberList.eq(i).html(numberString);
+				$numberList.eq(i).html(numberString);
 			}
-
 			pagIndex--;
-
 		}
 	}	
 
+	//Discover which which number is curretly active in the pagination section
 	function scroll(){
 		var number = parseInt($('.number.active').children().html());
 		return number;
@@ -155,7 +166,7 @@
 	function buildMovieList(response, search){
 		var movieFinder = response.Search;
 		var movieResponse = response.Response;
-		totalResults = response.totalResults;
+		var totalResults = response.totalResults;
 		var pagResults = pagLinkNumber(totalResults);
 		var movieIndv = "";
 
@@ -165,7 +176,7 @@
 		//Create the page movie elements if a response has come through
 		if(movieResponse === 'True'){
 			$.each(movieFinder, function(index, movie){
-				imdbArray.push(movie.imdbID)
+				imdbArray.push(movie.imdbID);
 				movieIndv += '<li>';
 				movieIndv += '<div class="poster-wrap">';
 
@@ -189,7 +200,7 @@
 			});
 
 				//Place the Newly built code into the DOM
-				movies.html(movieIndv);
+				$movies.html(movieIndv);
 
 				//If a pagination has already been put on the page, don't build another one and use the one currently built
 				if(!pagBuilt){
@@ -206,7 +217,7 @@
 				movieIndv += '</i>No movies found that match: ' + search + '.';
 				movieIndv += '</li>';
 
-				movies.html(movieIndv);
+				$movies.html(movieIndv);
 		}
 	}
 
@@ -214,7 +225,6 @@
 	function loadDescriptionArea(response) {
 		var title = response.Title;
 		var ratingImdb = response.imdbRating;
-		var year = response.Year;
 		var poster = response.Poster;
 		var plot = response.Plot;
 		var tomatoLink = response.tomatoURL;
@@ -247,23 +257,22 @@
 
 	//Run an AJAX Request on the Search bar of the movie app
 	function runAjaxSearch(number){
-		var searchValue = searchInput.val();
-		var yearValue = yearInput.val();
+		var $searchValue = $searchInput.val();
+		var $yearValue = $yearInput.val();
 		var input = {
-			s : searchValue,
-			y : yearValue,
+			s : $searchValue,
+			y : $yearValue,
 			r : 'json',
 			tomatoes: true,
-			plot : 'short',
 			page : number
-		}
+		};
 
 		$.ajax({
 			url: url,
 			data: input,
 			method: "GET",
 			success: function(response){
-				buildMovieList(response);
+				buildMovieList(response, $searchValue);
 			}	
 		});
 	}
@@ -275,7 +284,7 @@
 			plot: 'Full',
 			r: 'json',
 			tomatoes: true
-		}
+		};
 
 		$.ajax({
 			url: url,
@@ -287,14 +296,14 @@
 		});
 	}
 
-	//
+	//Find the index of which movie element poster was clicked on
 	function findClickedMovie(element){
 		var movieElement = element.target.closest('li');
-		var allmovieElements = $('#movies li');
+		var $allmovieElements = $('#movies li');
 		var index = 0;
 
-		for(var i = 0; i < allmovieElements.length; i++){
-			if(allmovieElements[i] === movieElement){
+		for(var i = 0; i < $allmovieElements.length; i++){
+			if($allmovieElements[i] === movieElement){
 				break;
 			} else {
 				index++;
@@ -308,16 +317,21 @@
 	*****************************************************************************/
 
 	//Run AJAX lookup using the IMDB ID capture from the initial load of the page.
-	$('#movies').on('click','li', function(event){
+	$movies.on('click','li', function(event){
 		var index = findClickedMovie(event);
-		var imdbSearch = imdbArray[index]
+		var imdbSearch = imdbArray[index];
 		runAjaxDesc(imdbSearch);
 		$('#pagination-links').fadeOut('fast');
 	});
 
 	//Search for a movie based the search inputs
 	$('#submit').click(function(event){
+		//Reset the pagination built boolean back to false so that it can get rebuilt again
 		pagBuilt = false;
+		//If a user does a search while within the description screen, toggle the class and send the user back to the movie screen area
+		if($('.desc-content').hasClass('on-screen')){
+			descriptionTransition();
+		}
 		runAjaxSearch(1);	
 		event.preventDefault();	
 	});
@@ -329,32 +343,42 @@
 	});
 
 	//Change page number based on click on pagination number
-	pag.on('click', '.page-number', function(){
+	$pag.on('click', '.page-number', function(){
 		$('.number').removeClass('active');
 		$(this).closest('.number').addClass('active');
 		var pagNumber = parseInt($(this).html());
-		pagIndex = pagNumber
+		pagIndex = pagNumber;
 		runAjaxSearch(pagNumber);
 	});
 
 	//Apply a scroll of the pagination links - INCREASE Number and run AJAX Request on new Active Number
-	pag.on('click', '.previous', function(){
+	$pag.on('click', '.previous', function(){
 		prevButton();
 		var page = scroll();
-		runAjaxSearch(page);
+		//Finds out if the first number element has reached 1 yet.
+		if(parseInt($('.number').first().children().html()) === 1){
+			return false;
+		} else {
+			runAjaxSearch(page);
+		}
 	});
 
 	//Apply a scroll of the pagination links - DECREASE Number and run AJAX Request on new Active number
-	pag.on('click', '.next', function(){
+	$pag.on('click', '.next', function(){
 		nextButton();
 		var page = scroll();
-		runAjaxSearch(page);
+		//Check to see if the the last pagination number has been reached
+		if(parseInt($('.number').last().children().html()) === counterArray.length){
+			return false;
+		} else {
+			runAjaxSearch(page);
+		}
 	});
 
 	//Hide the pagination section on load
-	pag.hide();
+	$pag.hide();
 
 
-//});
+});
 
-//movieFinderApp();
+movieFinderApp();
